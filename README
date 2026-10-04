@@ -1,0 +1,7 @@
+LEVANTAR EL SERVER:
+python3 -m http.server 8000
+
+ABRIR EN EL NAVEGADOR:
+http://localhost:8000
+
+
