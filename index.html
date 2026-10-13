@@ -33,7 +33,6 @@
             height: 400px; 
             background-color: #eef2f5; 
             border-radius: 8px;
-            /* Oculto por defecto hasta que se seleccione algo */
             display: none; 
         }
         
@@ -63,36 +62,42 @@
             Selecciona un modelo arriba para comenzar a visualizarlo.
         </div>
 
-        <!-- El visor AR, inicialmente vacío y oculto -->
-        <!-- shadow-intensity="1" agrega sombras realistas en el piso del AR -->
-        <!-- ar-scale="auto" asegura que el modelo se proyecte en su tamaño real -->
+        <!-- El visor AR adaptado -->
+        <!-- exposure="1.2" ayuda a compensar la palidez en Android -->
         <model-viewer id="visor-ar" 
                       src="" 
+                      ios-src="" 
                       ar 
                       ar-modes="scene-viewer quick-look" 
                       ar-scale="auto"
                       camera-controls 
                       auto-rotate 
-                      shadow-intensity="1">
+                      shadow-intensity="1"
+                      exposure="1.2">
         </model-viewer>
     </div>
 
-    <!-- Script para cambiar el modelo dinámicamente -->
+    <!-- Script para cambiar el modelo dinámicamente y asignar el .usdz para iOS -->
     <script>
         function cambiarModelo() {
             const selector = document.getElementById('selector-modelo');
             const visor = document.getElementById('visor-ar');
             const instruccion = document.getElementById('mensaje-instruccion');
-            const rutaModelo = selector.value;
+            const rutaModeloGLB = selector.value;
 
-            if (rutaModelo) {
-                // Si hay un modelo seleccionado, actualizamos la ruta, mostramos el visor y ocultamos el mensaje
-                visor.src = rutaModelo;
+            if (rutaModeloGLB) {
+                // Asignar el GLB para Web y Android
+                visor.src = rutaModeloGLB;
+                
+                // Generar dinámicamente la ruta del USDZ para iOS
+                const rutaModeloUSDZ = rutaModeloGLB.replace(".glb", ".usdz");
+                visor.setAttribute("ios-src", rutaModeloUSDZ);
+                
                 visor.style.display = "block";
                 instruccion.style.display = "none";
             } else {
-                // Si el usuario vuelve a "-- Selecciona --", ocultamos el visor y mostramos el mensaje
                 visor.src = "";
+                visor.removeAttribute("ios-src");
                 visor.style.display = "none";
                 instruccion.style.display = "block";
             }

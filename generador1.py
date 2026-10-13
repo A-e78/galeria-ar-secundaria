@@ -1,6 +1,6 @@
 import os
 
-# Plantilla inicial de la página web con el diseño del menú
+# 1. Plantilla inicial de la página web
 html = """<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -36,7 +36,6 @@ html = """<!DOCTYPE html>
             height: 400px; 
             background-color: #eef2f5; 
             border-radius: 8px;
-            /* Oculto por defecto hasta que se seleccione algo */
             display: none; 
         }
         
@@ -61,56 +60,60 @@ html = """<!DOCTYPE html>
 """
 
 # 2. Leer los modelos y generar las opciones (options) para el menú
-# Nota: Asegúrate de tener una carpeta llamada 'modelos' en el mismo directorio que este script
 if not os.path.exists("modelos"):
     os.makedirs("modelos")
-    print("Se creó la carpeta 'modelos'. Por favor, coloca allí tus archivos .glb")
+    print("Se creó la carpeta 'modelos'. Por favor, coloca allí tus archivos.")
 
+# Solo buscamos los .glb para armar la lista del menú, el JS se encargará del .usdz
 archivos = [f for f in os.listdir("modelos") if f.endswith(".glb")]
 
 for archivo in archivos:
-    # Limpiamos el nombre del archivo para que se vea bien en el menú
-    # Ej: "robot_juan_perez.glb" -> "Robot Juan Perez"
     nombre_limpio = archivo.replace(".glb", "").replace("_", " ").title()
     html += f'            <option value="modelos/{archivo}">{nombre_limpio}</option>\n'
 
-# 3. Completar el HTML con el visor y la lógica JavaScript
+# 3. Completar el HTML con el visor y la lógica JavaScript adaptada para iOS y Android
 html += """        </select>
 
         <div id="mensaje-instruccion">
             Selecciona un modelo arriba para comenzar a visualizarlo.
         </div>
 
-        <!-- El visor AR, inicialmente vacío y oculto -->
-        <!-- shadow-intensity="1" agrega sombras realistas en el piso del AR -->
-        <!-- ar-scale="auto" asegura que el modelo se proyecte en su tamaño real -->
+        <!-- El visor AR adaptado -->
+        <!-- exposure="1.2" ayuda a compensar la palidez en Android -->
         <model-viewer id="visor-ar" 
                       src="" 
+                      ios-src="" 
                       ar 
                       ar-modes="scene-viewer quick-look" 
                       ar-scale="auto"
                       camera-controls 
                       auto-rotate 
-                      shadow-intensity="1">
+                      shadow-intensity="1"
+                      exposure="1.2">
         </model-viewer>
     </div>
 
-    <!-- Script para cambiar el modelo dinámicamente -->
+    <!-- Script para cambiar el modelo dinámicamente y asignar el .usdz para iOS -->
     <script>
         function cambiarModelo() {
             const selector = document.getElementById('selector-modelo');
             const visor = document.getElementById('visor-ar');
             const instruccion = document.getElementById('mensaje-instruccion');
-            const rutaModelo = selector.value;
+            const rutaModeloGLB = selector.value;
 
-            if (rutaModelo) {
-                // Si hay un modelo seleccionado, actualizamos la ruta, mostramos el visor y ocultamos el mensaje
-                visor.src = rutaModelo;
+            if (rutaModeloGLB) {
+                // Asignar el GLB para Web y Android
+                visor.src = rutaModeloGLB;
+                
+                // Generar dinámicamente la ruta del USDZ para iOS
+                const rutaModeloUSDZ = rutaModeloGLB.replace(".glb", ".usdz");
+                visor.setAttribute("ios-src", rutaModeloUSDZ);
+                
                 visor.style.display = "block";
                 instruccion.style.display = "none";
             } else {
-                // Si el usuario vuelve a "-- Selecciona --", ocultamos el visor y mostramos el mensaje
                 visor.src = "";
+                visor.removeAttribute("ios-src");
                 visor.style.display = "none";
                 instruccion.style.display = "block";
             }
@@ -124,4 +127,4 @@ html += """        </select>
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
 
-print(f"¡Archivo index.html generado con éxito! Contiene {len(archivos)} modelos en el menú.")
+print(f"¡Archivo index.html generado con éxito! Menú listo para cargar GLB y USDZ de {len(archivos)} modelos.")
