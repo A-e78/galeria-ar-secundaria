@@ -94,6 +94,21 @@
                 
                 visor.style.display = "block";
                 instruccion.style.display = "none";
+
+                // --- SOLUCIÓN PARA VISUALIZACIÓN (Android e iPhone) ---
+                // Este evento se dispara cada vez que se carga un nuevo modelo en el visor
+                visor.addEventListener('load', () => {
+                    // Recorre todos los materiales del modelo cargado
+                    visor.model.materials.forEach(material => {
+                        // 1. Fuerza metalicidad a 0 (evita el aspecto metálico en iPhone)
+                        material.pbrMetallicRoughness.setMetallicFactor(0.0);
+                        
+                        // 2. Ajusta la rugosidad (0.7 es un buen equilibrio para que no sea espejo)
+                        material.pbrMetallicRoughness.setRoughnessFactor(0.7);
+                    });
+                    console.log('Materiales corregidos para visualización realista.');
+                }, { once: true }); // El { once: true } asegura que no se dupliquen los ajustes
+
             } else {
                 visor.src = "";
                 visor.removeAttribute("ios-src");
