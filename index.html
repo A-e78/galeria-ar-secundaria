@@ -3,119 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galería AR - Escuela</title>
-    <!-- Importar el componente model-viewer de Google -->
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+    <meta name="theme-color" content="#f4f4f9">
+    <title>Galería AR Escolar</title>
+
+    <script type="module"
+        src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js">
+    </script>
+
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f4f4f9; padding: 20px; margin: 0; }
-        .contenedor { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h1 { color: #333; font-size: 24px; margin-bottom: 10px; }
-        p { color: #666; font-size: 15px; margin-bottom: 20px; }
-        
-        /* Estilos para el menú desplegable */
-        select { 
-            font-size: 16px; 
-            padding: 12px; 
-            width: 100%; 
-            margin-bottom: 20px; 
-            border-radius: 8px; 
-            border: 2px solid #ddd; 
-            background-color: #fff;
-            cursor: pointer;
-            outline: none;
-            transition: border-color 0.3s;
+        * {
+            box-sizing: border-box;
         }
-        select:focus { border-color: #007bff; }
-        
-        /* Estilos para el visor 3D */
-        model-viewer { 
-            width: 100%; 
-            height: 400px; 
-            background-color: #eef2f5; 
-            border-radius: 8px;
-            display: none; 
+
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f4f4f9;
+            padding: 20px;
+            margin: 0;
         }
-        
-        /* Instrucción para el usuario */
+
+        .contenedor {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,.1);
+        }
+
+        h1 {
+            color: #333;
+            font-size: 27px;
+        }
+
+        p {
+            color: #666;
+            line-height: 1.5;
+        }
+
+        select {
+            width: 100%;
+            padding: 14px;
+            margin: 12px 0 20px;
+            border: 2px solid #ddd;
+            border-radius: 9px;
+            background: white;
+            font-size: 16px;
+        }
+
+        model-viewer {
+            width: 100%;
+            height: 430px;
+            display: none;
+            background-color: #eef2f5;
+            border-radius: 10px;
+
+            /* Solo afecta al renderizado del visor web. */
+            exposure: 1;
+        }
+
         #mensaje-instruccion {
             padding: 40px 20px;
             color: #888;
             border: 2px dashed #ddd;
             border-radius: 8px;
-            margin-top: 10px;
         }
     </style>
 </head>
+
 <body>
-    <div class="contenedor">
+    <main class="contenedor">
         <h1>Exposición AR Escolar</h1>
-        <p>Selecciona el diseño de un alumno en el menú y luego usa el botón en la esquina inferior derecha del visor para proyectarlo en el patio.</p>
-        
-        <!-- El menú desplegable -->
-        <select id="selector-modelo" onchange="cambiarModelo()">
+
+        <p>
+            Selecciona el diseño de un alumno y utiliza el botón
+            de realidad aumentada del visor para colocarlo en tu entorno.
+        </p>
+
+        <select id="selector-modelo">
             <option value="">-- Selecciona un diseño --</option>
-            <option value="modelos/aldo.glb">Aldo</option>
+            <option value="modelos_ar/aldo.glb">Aldo</option>
         </select>
 
         <div id="mensaje-instruccion">
-            Selecciona un modelo arriba para comenzar a visualizarlo.
+            Selecciona un modelo para comenzar a visualizarlo.
         </div>
 
-        <!-- El visor AR adaptado -->
-        <!-- exposure="1.2" ayuda a compensar la palidez en Android -->
-        <model-viewer id="visor-ar" 
-                      src="" 
-                      ios-src="" 
-                      ar 
-                      ar-modes="scene-viewer quick-look" 
-                      ar-scale="auto"
-                      camera-controls 
-                      auto-rotate 
-                      shadow-intensity="1"
-                      exposure="1.2">
+        <model-viewer
+            id="visor-ar"
+            ar
+            ar-modes="webxr scene-viewer quick-look"
+            ar-scale="auto"
+            ar-placement="floor"
+            camera-controls
+            auto-rotate
+            shadow-intensity="0.8"
+            exposure="1">
         </model-viewer>
-    </div>
+    </main>
 
-    <!-- Script para cambiar el modelo dinámicamente y asignar el .usdz para iOS -->
     <script>
+        const selector = document.getElementById("selector-modelo");
+        const visor = document.getElementById("visor-ar");
+        const instruccion = document.getElementById("mensaje-instruccion");
+
+        /*
+         * Registrar el evento antes de empezar a cargar los modelos.
+         * Las correcciones se aplican al visor web y a WebXR.
+         */
+        visor.addEventListener("load", () => {
+            if (!visor.model) return;
+
+            for (const material of visor.model.materials) {
+                const pbr = material.pbrMetallicRoughness;
+
+                if (!pbr) continue;
+
+                pbr.setMetallicFactor(0);
+                pbr.setRoughnessFactor(0.85);
+            }
+
+            console.log("Modelo cargado y materiales ajustados.");
+        });
+
         function cambiarModelo() {
-            const selector = document.getElementById('selector-modelo');
-            const visor = document.getElementById('visor-ar');
-            const instruccion = document.getElementById('mensaje-instruccion');
-            const rutaModeloGLB = selector.value;
+            const ruta = selector.value;
 
-            if (rutaModeloGLB) {
-                // Asignar el GLB para Web y Android
-                visor.src = rutaModeloGLB;
-                
-                // Generar dinámicamente la ruta del USDZ para iOS
-                const rutaModeloUSDZ = rutaModeloGLB.replace(".glb", ".usdz");
-                visor.setAttribute("ios-src", rutaModeloUSDZ);
-                
-                visor.style.display = "block";
-                instruccion.style.display = "none";
-
-                // --- SOLUCIÓN PARA VISUALIZACIÓN (Android e iPhone) ---
-                // Este evento se dispara cada vez que se carga un nuevo modelo en el visor
-                visor.addEventListener('load', () => {
-                    // Recorre todos los materiales del modelo cargado
-                    visor.model.materials.forEach(material => {
-                        // 1. Fuerza metalicidad a 0 (evita el aspecto metálico en iPhone)
-                        material.pbrMetallicRoughness.setMetallicFactor(0.0);
-                        
-                        // 2. Ajusta la rugosidad (0.7 es un buen equilibrio para que no sea espejo)
-                        material.pbrMetallicRoughness.setRoughnessFactor(0.7);
-                    });
-                    console.log('Materiales corregidos para visualización realista.');
-                }, { once: true }); // El { once: true } asegura que no se dupliquen los ajustes
-
-            } else {
-                visor.src = "";
+            if (!ruta) {
+                visor.removeAttribute("src");
                 visor.removeAttribute("ios-src");
                 visor.style.display = "none";
                 instruccion.style.display = "block";
+                return;
             }
+
+            /*
+             * Se utiliza el GLB corregido como fuente.
+             * No asignar ios-src: model-viewer generará el USDZ
+             * automáticamente cuando se active Quick Look.
+             */
+            visor.removeAttribute("ios-src");
+
+            instruccion.style.display = "none";
+            visor.style.display = "block";
+            visor.src = ruta;
         }
+
+        selector.addEventListener("change", cambiarModelo);
     </script>
 </body>
 </html>
